@@ -52,6 +52,9 @@ jobs:
           # mingw is determined by this author to be too buggy to support
           - os: windows-latest
             compiler: gcc-14
+          # gcc-14 on macOS has compatibility issues with system headers
+          - os: macos-latest
+            compiler: gcc-14
 
         include:
           # Add appropriate variables for gcov version required. This will intentionally break
