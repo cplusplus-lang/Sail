@@ -189,4 +189,18 @@ ctest -C Debug
 cd ../
 ```
 
+### Building
 
+For Debug builds:
+
+```shell
+  cmake -B target/debug -S target/generated -DCMAKE_BUILD_TYPE=Debug
+  cmake --build target/debug
+```
+
+For Release builds:
+
+```shell
+  cmake -B target/release -S target/generated -DCMAKE_BUILD_TYPE=Release
+  cmake --build target/release
+```

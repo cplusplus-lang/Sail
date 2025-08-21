@@ -14,10 +14,21 @@ endif()
 # when compiling with PCH enabled
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Define project root directory first
+set(PROJECT_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+set(PROJECT_SRC "${PROJECT_ROOT}/src")
+
+# Read project name and version from Sail.toml
+file(READ "${PROJECT_ROOT}/Sail.toml" TOML_CONTENT)
+string(REGEX MATCH "name = \"([^\"]+)\"" _ ${TOML_CONTENT})
+set(PROJECT_NAME_FROM_TOML ${CMAKE_MATCH_1})
+string(REGEX MATCH "version = \"([^\"]+)\"" _ ${TOML_CONTENT})
+set(PROJECT_VERSION_FROM_TOML ${CMAKE_MATCH_1})
+
 # Set the project name and language
 project(
-  Sail
-  VERSION 0.0.1
+  ${PROJECT_NAME_FROM_TOML}
+  VERSION ${PROJECT_VERSION_FROM_TOML}
   DESCRIPTION ""
   HOMEPAGE_URL "https://github.com/cplusplus-lang/Sail"
   LANGUAGES CXX C)
@@ -58,7 +69,7 @@ add_library(Sail::Sail_warnings ALIAS Sail_warnings)
 add_subdirectory(configured_files)
 
 # Adding the src:
-add_subdirectory(src)
+include(Targets.cmake)
 
 # Don't even look at tests if we're not top level
 if(NOT PROJECT_IS_TOP_LEVEL)
@@ -70,7 +81,7 @@ include(CTest)
 
 if(BUILD_TESTING)
   message(AUTHOR_WARNING "Building Tests. Be sure to check out test/constexpr_tests.cpp for constexpr testing")
-  add_subdirectory(test)
+  add_subdirectory(${PROJECT_ROOT}/test test)
 endif()
 
 
@@ -79,7 +90,7 @@ if(Sail_BUILD_FUZZ_TESTS)
   if (NOT Sail_ENABLE_SANITIZER_ADDRESS AND NOT Sail_ENABLE_SANITIZER_THREAD)
     message(WARNING "You need asan or tsan enabled for meaningful fuzz testing")
   endif()
-  add_subdirectory(fuzz_test)
+  add_subdirectory(${PROJECT_ROOT}/fuzz_test fuzz_test)
 
 endif()
 
@@ -92,7 +103,7 @@ if(MSVC)
 endif()
 
 # set the startup project for the "play" button in MSVC
-set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT intro)
+set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT sail)
 
 if(CMAKE_SKIP_INSTALL_RULES)
   return()
@@ -104,7 +115,7 @@ include(cmake/PackageProject.cmake)
 # we know we want to ship
 Sail_package_project(
   TARGETS
-  intro
+  sail
   Sail_options
   Sail_warnings
   # FIXME: this does not work! CK
