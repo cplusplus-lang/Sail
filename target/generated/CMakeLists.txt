@@ -22,6 +22,9 @@ project(
   HOMEPAGE_URL "https://github.com/cplusplus-lang/Sail"
   LANGUAGES CXX C)
 
+# Define project root directory
+set(PROJECT_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+
 include(cmake/PreventInSourceBuilds.cmake)
 include(ProjectOptions.cmake)
 
@@ -58,7 +61,7 @@ add_library(Sail::Sail_warnings ALIAS Sail_warnings)
 add_subdirectory(configured_files)
 
 # Adding the src:
-add_subdirectory(src)
+add_subdirectory(${PROJECT_ROOT}/src src)
 
 # Don't even look at tests if we're not top level
 if(NOT PROJECT_IS_TOP_LEVEL)
@@ -70,7 +73,7 @@ include(CTest)
 
 if(BUILD_TESTING)
   message(AUTHOR_WARNING "Building Tests. Be sure to check out test/constexpr_tests.cpp for constexpr testing")
-  add_subdirectory(test)
+  add_subdirectory(${PROJECT_ROOT}/test test)
 endif()
 
 
@@ -79,7 +82,7 @@ if(Sail_BUILD_FUZZ_TESTS)
   if (NOT Sail_ENABLE_SANITIZER_ADDRESS AND NOT Sail_ENABLE_SANITIZER_THREAD)
     message(WARNING "You need asan or tsan enabled for meaningful fuzz testing")
   endif()
-  add_subdirectory(fuzz_test)
+  add_subdirectory(${PROJECT_ROOT}/fuzz_test fuzz_test)
 
 endif()
 

@@ -9,7 +9,7 @@ add_library(Sail::sample_library ALIAS sample_library)
 
 target_link_libraries(sample_library PRIVATE Sail_options Sail_warnings)
 
-target_include_directories(sample_library ${WARNING_GUARD} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+target_include_directories(sample_library ${WARNING_GUARD} PUBLIC $<BUILD_INTERFACE:${PROJECT_ROOT}/include>
                                                                   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>)
 
 target_compile_features(sample_library PUBLIC cxx_std_20)
