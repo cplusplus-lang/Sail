@@ -14,16 +14,24 @@ endif()
 # when compiling with PCH enabled
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Define project root directory first
+set(PROJECT_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+set(PROJECT_SRC "${PROJECT_ROOT}/src")
+
+# Read project name and version from Sail.toml
+file(READ "${PROJECT_ROOT}/Sail.toml" TOML_CONTENT)
+string(REGEX MATCH "name = \"([^\"]+)\"" _ ${TOML_CONTENT})
+set(PROJECT_NAME_FROM_TOML ${CMAKE_MATCH_1})
+string(REGEX MATCH "version = \"([^\"]+)\"" _ ${TOML_CONTENT})
+set(PROJECT_VERSION_FROM_TOML ${CMAKE_MATCH_1})
+
 # Set the project name and language
 project(
-  Sail
-  VERSION 0.0.1
+  ${PROJECT_NAME_FROM_TOML}
+  VERSION ${PROJECT_VERSION_FROM_TOML}
   DESCRIPTION ""
   HOMEPAGE_URL "https://github.com/cplusplus-lang/Sail"
   LANGUAGES CXX C)
-
-# Define project root directory
-set(PROJECT_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 
 include(cmake/PreventInSourceBuilds.cmake)
 include(ProjectOptions.cmake)
@@ -61,7 +69,7 @@ add_library(Sail::Sail_warnings ALIAS Sail_warnings)
 add_subdirectory(configured_files)
 
 # Adding the src:
-add_subdirectory(${PROJECT_ROOT}/src src)
+include(Targets.cmake)
 
 # Don't even look at tests if we're not top level
 if(NOT PROJECT_IS_TOP_LEVEL)
@@ -95,7 +103,7 @@ if(MSVC)
 endif()
 
 # set the startup project for the "play" button in MSVC
-set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT intro)
+set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT sail)
 
 if(CMAKE_SKIP_INSTALL_RULES)
   return()
@@ -107,7 +115,7 @@ include(cmake/PackageProject.cmake)
 # we know we want to ship
 Sail_package_project(
   TARGETS
-  intro
+  sail
   Sail_options
   Sail_warnings
   # FIXME: this does not work! CK
