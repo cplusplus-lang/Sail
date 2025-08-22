@@ -1,4 +1,4 @@
-# Parse Sail.toml file and extract dependencies
+# Parse Sail.toml file and extract package info and dependencies
 function(parse_sail_toml TOML_FILE)
     if(NOT EXISTS ${TOML_FILE})
         message(FATAL_ERROR "Sail.toml file not found: ${TOML_FILE}")
@@ -8,6 +8,7 @@ function(parse_sail_toml TOML_FILE)
     file(READ ${TOML_FILE} TOML_CONTENT)
     
     # Initialize variables
+    set(IN_PACKAGE_SECTION FALSE)
     set(IN_DEPENDENCIES_SECTION FALSE)
     set(SAIL_DEPENDENCIES "" PARENT_SCOPE)
     
@@ -23,16 +24,47 @@ function(parse_sail_toml TOML_FILE)
             continue()
         endif()
         
-        # Check for [dependencies] section
-        if("${LINE}" STREQUAL "[dependencies]")
-            set(IN_DEPENDENCIES_SECTION TRUE)
+        # Check for [package] section
+        if("${LINE}" STREQUAL "[package]")
+            set(IN_PACKAGE_SECTION TRUE)
+            set(IN_DEPENDENCIES_SECTION FALSE)
             continue()
         endif()
         
-        # Check for other sections (exit dependencies section)
-        if("${LINE}" MATCHES "^\\[.*\\]$" AND NOT "${LINE}" STREQUAL "[dependencies]")
-            set(IN_DEPENDENCIES_SECTION FALSE)
+        # Check for [dependencies] section
+        if("${LINE}" STREQUAL "[dependencies]")
+            set(IN_DEPENDENCIES_SECTION TRUE)
+            set(IN_PACKAGE_SECTION FALSE)
             continue()
+        endif()
+        
+        # Check for other sections (exit current section)
+        if("${LINE}" MATCHES "^\\[.*\\]$" AND NOT "${LINE}" STREQUAL "[dependencies]" AND NOT "${LINE}" STREQUAL "[package]")
+            set(IN_DEPENDENCIES_SECTION FALSE)
+            set(IN_PACKAGE_SECTION FALSE)
+            continue()
+        endif()
+        
+        # Parse package lines if we're in the package section
+        if(IN_PACKAGE_SECTION AND "${LINE}" MATCHES "^([^=]+)=")
+            # Extract key name
+            string(REGEX REPLACE "^([^=]+)=.*" "\\1" KEY_NAME "${LINE}")
+            string(STRIP "${KEY_NAME}" KEY_NAME)
+            
+            # Extract value (remove quotes)
+            string(REGEX MATCH "\"([^\"]+)\"" VALUE_MATCH "${LINE}")
+            if(VALUE_MATCH)
+                string(REGEX REPLACE "\"([^\"]+)\"" "\\1" KEY_VALUE "${VALUE_MATCH}")
+            else()
+                set(KEY_VALUE "")
+            endif()
+            
+            # Set package variables
+            if("${KEY_NAME}" STREQUAL "name")
+                set(SAIL_PACKAGE_NAME ${KEY_VALUE} PARENT_SCOPE)
+            elseif("${KEY_NAME}" STREQUAL "version")
+                set(SAIL_PACKAGE_VERSION ${KEY_VALUE} PARENT_SCOPE)
+            endif()
         endif()
         
         # Parse dependency lines if we're in the dependencies section

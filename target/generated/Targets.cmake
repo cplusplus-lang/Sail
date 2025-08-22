@@ -5,9 +5,6 @@ target_link_libraries(
   PRIVATE Sail::Sail_options
           Sail::Sail_warnings)
 
-# Parse Sail.toml to get list of dependencies
-parse_sail_toml(${PROJECT_ROOT}/Sail.toml)
-
 # Collect all system libraries to link based on available dependencies
 set(SYSTEM_LIBS "")
 foreach(DEPENDENCY ${SAIL_DEPENDENCIES})

@@ -5,10 +5,6 @@ include(cmake/SailTomlParser.cmake)
 # CMAKE_CXX_FLAGS don't propagate out to other
 # targets
 function(Sail_setup_dependencies)
-
-  # Parse Sail.toml to get list of dependencies
-  parse_sail_toml(${PROJECT_ROOT}/Sail.toml)
-
   # For each dependency, see if it's
   # already been provided to us by a parent project
 
