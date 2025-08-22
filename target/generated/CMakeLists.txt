@@ -18,12 +18,13 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(PROJECT_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 set(PROJECT_SRC "${PROJECT_ROOT}/src")
 
-# Read project name and version from Sail.toml
-file(READ "${PROJECT_ROOT}/Sail.toml" TOML_CONTENT)
-string(REGEX MATCH "name = \"([^\"]+)\"" _ ${TOML_CONTENT})
-set(PROJECT_NAME_FROM_TOML ${CMAKE_MATCH_1})
-string(REGEX MATCH "version = \"([^\"]+)\"" _ ${TOML_CONTENT})
-set(PROJECT_VERSION_FROM_TOML ${CMAKE_MATCH_1})
+# Parse Sail.toml for package information
+include(cmake/SailTomlParser.cmake)
+parse_sail_toml(${PROJECT_ROOT}/Sail.toml)
+
+# Use parsed values
+set(PROJECT_NAME_FROM_TOML ${SAIL_PACKAGE_NAME})
+set(PROJECT_VERSION_FROM_TOML ${SAIL_PACKAGE_VERSION})
 
 # Set the project name and language
 project(

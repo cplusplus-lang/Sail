@@ -1,3 +1,10 @@
 [package]
 name = "sail"
 version = "0.1.0"
+
+[dependencies]
+fmtlib = "11.1.4"
+spdlog = "1.15.2"
+catch2 = "3.8.1"
+cli11 = "2.5.0"
+ftxui = { version = "6.0.2", components = ["screen", "dom", "component"] }
