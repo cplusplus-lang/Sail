@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <cstdlib>
+#include <utility>
 
 namespace fs = std::filesystem;
 
@@ -15,28 +16,31 @@ private:
     int tests_passed = 0;
     int tests_failed = 0;
 
+public:
     // ANSI color codes (work on most terminals)
-    static inline const std::string RED = "\033[0;31m";
-    static inline const std::string GREEN = "\033[0;32m";
-    static inline const std::string BLUE = "\033[0;34m";
-    static inline const std::string YELLOW = "\033[1;33m";
-    static inline const std::string NC = "\033[0m"; // No Color
+    static constexpr const char* RED_COLOR = "\033[0;31m";
+    static constexpr const char* GREEN_COLOR = "\033[0;32m"; 
+    static constexpr const char* BLUE_COLOR = "\033[0;34m";
+    static constexpr const char* YELLOW_COLOR = "\033[1;33m";
+    static constexpr const char* NO_COLOR = "\033[0m"; // No Color
+    
+private:
 
-    void print_header(const std::string& title) {
-        std::cout << "\n" << BLUE << "=== " << title << " ===" << NC << "\n";
+    static void print_header(const std::string& title) {
+        std::cout << "\n" << BLUE_COLOR << "=== " << title << " ===" << NO_COLOR << "\n";
     }
 
-    void print_test(const std::string& test) {
-        std::cout << YELLOW << "Testing: " << test << NC << "\n";
+    static void print_test(const std::string& test) {
+        std::cout << YELLOW_COLOR << "Testing: " << test << NO_COLOR << "\n";
     }
 
     void print_success(const std::string& message) {
-        std::cout << GREEN << "✓ " << message << NC << "\n";
+        std::cout << GREEN_COLOR << "✓ " << message << NO_COLOR << "\n";
         tests_passed++;
     }
 
     void print_error(const std::string& message) {
-        std::cout << RED << "✗ " << message << NC << "\n";
+        std::cout << RED_COLOR << "✗ " << message << NO_COLOR << "\n";
         tests_failed++;
     }
 
@@ -501,7 +505,7 @@ public:
         
         // Verify sail executable exists
         if (!fs::exists(sail_executable)) {
-            std::cout << RED << "ERROR: Sail executable not found at " << sail_executable << NC << "\n";
+            std::cout << SailTester::RED_COLOR << "ERROR: Sail executable not found at " << sail_executable << SailTester::NO_COLOR << "\n";
             std::cout << "Please build Sail first or provide correct path as argument" << "\n";
             return;
         }
@@ -522,51 +526,56 @@ public:
         
         // Summary
         print_header("Test Results Summary");
-        std::cout << "Tests passed: " << GREEN << tests_passed << NC << "\n";
-        std::cout << "Tests failed: " << RED << tests_failed << NC << "\n";
+        std::cout << "Tests passed: " << SailTester::GREEN_COLOR << tests_passed << SailTester::NO_COLOR << "\n";
+        std::cout << "Tests failed: " << SailTester::RED_COLOR << tests_failed << SailTester::NO_COLOR << "\n";
         
         if (tests_failed == 0) {
-            std::cout << "\n" << GREEN << "🎉 All tests passed!" << NC << "\n";
+            std::cout << "\n" << SailTester::GREEN_COLOR << "🎉 All tests passed!" << SailTester::NO_COLOR << "\n";
         } else {
-            std::cout << "\n" << RED << "❌ Some tests failed." << NC << "\n";
+            std::cout << "\n" << SailTester::RED_COLOR << "❌ Some tests failed." << SailTester::NO_COLOR << "\n";
         }
     }
 };
 
-int main(int argc, char* argv[]) {
-    std::string sail_executable;
-    
-    if (argc > 1) {
-        sail_executable = std::string(argv[1]); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-    } else {
-        // Try to find the executable in common locations
-        const std::vector<std::string> possible_paths = {
-            "./target/generated/build/sail",
-            "../target/generated/build/sail",
-            "./build/sail",
-            "../build/sail",
-            "sail"
-        };
+int main(int argc, char* argv[]) noexcept {
+    try {
+        std::string sail_executable;
         
-        for (const auto& path : possible_paths) {
-            if (fs::exists(path)) {
-                sail_executable = path;
-                break;
-            }
-        }
-        
-        if (sail_executable.empty()) {
-            std::cout << "Usage: " << std::string(argv[0]) << " <path-to-sail-executable>" << "\n"; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-            std::cout << "Or ensure sail executable is in one of these locations:" << "\n";
+        if (argc > 1) {
+            sail_executable = std::string(argv[1]); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        } else {
+            // Try to find the executable in common locations
+            const std::vector<std::string> possible_paths = {
+                "./target/generated/build/sail",
+                "../target/generated/build/sail",
+                "./build/sail",
+                "../build/sail",
+                "sail"
+            };
+            
             for (const auto& path : possible_paths) {
-                std::cout << "  " << path << "\n";
+                if (fs::exists(path)) {
+                    sail_executable = path;
+                    break;
+                }
             }
-            return 1;
+            
+            if (sail_executable.empty()) {
+                std::cout << "Usage: " << std::string(argv[0]) << " <path-to-sail-executable>" << "\n"; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+                std::cout << "Or ensure sail executable is in one of these locations:" << "\n";
+                for (const auto& path : possible_paths) {
+                    std::cout << "  " << path << "\n";
+                }
+                return 1;
+            }
         }
+        
+        SailTester tester(sail_executable);
+        tester.run_all_tests();
+        
+        return 0;
+    } catch (...) {
+        std::cout << "An unexpected error occurred during test execution\n";
+        return 1;
     }
-    
-    SailTester tester(sail_executable);
-    tester.run_all_tests();
-    
-    return 0;
 }
