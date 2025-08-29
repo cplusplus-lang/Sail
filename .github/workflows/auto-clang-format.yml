@@ -7,11 +7,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-      with:
-        ref: ${{ github.event.pull_request.head.ref }}
-        repository: ${{ github.event.pull_request.head.repo.full_name }}
-        fetch-depth: 0
-
     - uses: DoozyX/clang-format-lint-action@v0.20
       with:
         source: '.'
@@ -19,12 +14,10 @@ jobs:
         extensions: 'h,cpp,hpp'
         clangFormatVersion: 19
         inplace: True
-
     - uses: EndBug/add-and-commit@v9
       with:
         author_name: Clang Robot
         author_email: robot@example.com
         message: ':art: Committing clang-format changes'
-        push: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
