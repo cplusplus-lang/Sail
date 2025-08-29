@@ -85,11 +85,54 @@ private:
                 cpm_calls += fmt::format("CPMAddPackage(\"gh:CLIUtils/CLI11#v{}\")\n", version);
             } else if (name == "nlohmann_json") {
                 cpm_calls += fmt::format("CPMAddPackage(\"gh:nlohmann/json#v{}\")\n", version);
+            } else if (name == "eigen3") {
+                cpm_calls += fmt::format("CPMAddPackage(\"gh:libeigen/eigen#{}\")\n", version);
+            } else if (name == "boost") {
+                cpm_calls += fmt::format("CPMAddPackage(\"gh:boostorg/boost#boost-{}\")\n", version);
+            } else if (name == "opencv") {
+                cpm_calls += fmt::format("CPMAddPackage(\"gh:opencv/opencv#{}\")\n", version);
             } else {
                 cpm_calls += fmt::format("# CPMAddPackage(\"{} version {}\")\n", name, version);
             }
         }
         return cpm_calls;
+    }
+    
+    std::string generate_system_dependencies(const std::map<std::string, std::string>& dependencies) {
+        std::string system_deps;
+        
+        for (const auto& [name, version] : dependencies) {
+            if (name == "qt5") {
+                system_deps += fmt::format(R"(# Qt5 Setup
+find_package(Qt5 {} REQUIRED COMPONENTS Core Widgets)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTORCC ON)
+
+)", version);
+            } else if (name == "qt6") {
+                system_deps += fmt::format(R"(# Qt6 Setup
+find_package(Qt6 {} REQUIRED COMPONENTS Core Widgets)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTORCC ON)
+qt_standard_project_setup()
+
+)", version);
+            } else if (name == "opengl") {
+                system_deps += "find_package(OpenGL REQUIRED)\n";
+            } else if (name == "threads") {
+                system_deps += "find_package(Threads REQUIRED)\n";
+            } else if (name == "zlib") {
+                system_deps += "find_package(ZLIB REQUIRED)\n";
+            } else if (name == "curl") {
+                system_deps += "find_package(CURL REQUIRED)\n";
+            } else if (name == "pkg-config") {
+                system_deps += "find_package(PkgConfig REQUIRED)\n";
+            }
+        }
+        
+        return system_deps;
     }
     
     bool find_project_root() {
@@ -127,6 +170,7 @@ private:
         }
         
         auto dependencies = parse_dependencies_from_toml(toml_content);
+        std::string system_deps = generate_system_dependencies(dependencies);
         std::string cpm_calls = generate_dependency_cpm_calls(dependencies);
         
         std::ofstream file(cmake_file);
@@ -144,10 +188,14 @@ project(${PROJECT_NAME} VERSION ${PROJECT_VERSION})
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# System Dependencies
+)";
+        file << system_deps;
+        file << R"(
 # CPM Package Manager
 include(cmake/CPM.cmake)
 
-# Dependencies from Sail.toml
+# CPM Dependencies from Sail.toml
 )";
         file << cpm_calls;
         file << R"(
@@ -173,6 +221,24 @@ target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/../../sr
                 file << "target_link_libraries(${PROJECT_NAME} PRIVATE CLI11::CLI11)\n";
             } else if (name == "nlohmann_json") {
                 file << "target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)\n";
+            } else if (name == "eigen3") {
+                file << "target_link_libraries(${PROJECT_NAME} PRIVATE Eigen3::Eigen)\n";
+            } else if (name == "boost") {
+                file << "target_link_libraries(${PROJECT_NAME} PRIVATE Boost::boost)\n";
+            } else if (name == "opencv") {
+                file << "target_link_libraries(${PROJECT_NAME} PRIVATE opencv_core opencv_imgproc opencv_imgcodecs)\n";
+            } else if (name == "qt5") {
+                file << "target_link_libraries(${PROJECT_NAME} PRIVATE Qt5::Core Qt5::Widgets)\n";
+            } else if (name == "qt6") {
+                file << "target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Core Qt6::Widgets)\n";
+            } else if (name == "opengl") {
+                file << "target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL)\n";
+            } else if (name == "threads") {
+                file << "target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)\n";
+            } else if (name == "zlib") {
+                file << "target_link_libraries(${PROJECT_NAME} PRIVATE ZLIB::ZLIB)\n";
+            } else if (name == "curl") {
+                file << "target_link_libraries(${PROJECT_NAME} PRIVATE CURL::libcurl)\n";
             }
         }
         
@@ -392,6 +458,18 @@ int main() {
                 dep_version = "2.3.2";
             } else if (dep_name == "nlohmann_json") {
                 dep_version = "3.11.2";
+            } else if (dep_name == "qt5") {
+                dep_version = "5.15";
+            } else if (dep_name == "qt6") {
+                dep_version = "6.5";
+            } else if (dep_name == "opengl") {
+                dep_version = "system";
+            } else if (dep_name == "threads") {
+                dep_version = "system";
+            } else if (dep_name == "zlib") {
+                dep_version = "system";
+            } else if (dep_name == "curl") {
+                dep_version = "system";
             } else {
                 spdlog::error("No default version available for '{}'. Please specify version with {}@<version>", dep_name, dep_name);
                 return 1;

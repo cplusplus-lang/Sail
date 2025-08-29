@@ -140,11 +140,19 @@ catch2 = "3.4.0"
 
 Sail comes with built-in support for popular C++ libraries:
 
+**CPM-based Dependencies:**
 - **fmt**: Modern C++ formatting library
 - **spdlog**: Fast C++ logging library  
 - **catch2**: Modern C++ testing framework
 - **cli11**: Command line parser for C++
 - **nlohmann_json**: JSON for Modern C++
+
+**System Libraries:**
+- **qt5/qt6**: Qt framework for GUI applications
+- **opengl**: OpenGL graphics library
+- **threads**: C++ threading support
+- **curl**: HTTP client library
+- **zlib**: Compression library
 
 ## Project Structure
 
@@ -231,6 +239,81 @@ fmt = "10.1.1"
 spdlog = "1.13.0"
 catch2 = "3.4.0"
 ```
+
+### Creating a Qt Application
+
+```bash
+sail new qt-hello
+cd qt-hello
+sail add qt6
+```
+
+Edit `src/main.cpp`:
+```cpp
+#include <QApplication>
+#include <QWidget>
+#include <QVBoxLayout>
+#include <QLabel>
+#include <QPushButton>
+
+int main(int argc, char *argv[]) {
+    QApplication app(argc, argv);
+
+    QWidget window;
+    window.setWindowTitle("Hello Qt with Sail!");
+    window.setFixedSize(300, 200);
+
+    QVBoxLayout *layout = new QVBoxLayout(&window);
+    
+    QLabel *label = new QLabel("Welcome to Sail + Qt!");
+    label->setAlignment(Qt::AlignCenter);
+    layout->addWidget(label);
+
+    QPushButton *button = new QPushButton("Click Me!");
+    layout->addWidget(button);
+
+    QObject::connect(button, &QPushButton::clicked, [&label]() {
+        label->setText("Button clicked!");
+    });
+
+    window.show();
+    return app.exec();
+}
+```
+
+```bash
+sail run
+```
+
+Your `Sail.toml` will be automatically updated:
+```toml
+[package]
+name = "qt-hello"
+version = "0.1.0"
+
+[dependencies]
+qt6 = "6.5"
+```
+
+### System Libraries Support
+
+Sail supports common system libraries with automatic CMake integration:
+
+```bash
+# Qt applications
+sail add qt5      # Qt5 with Core and Widgets
+sail add qt6      # Qt6 with Core and Widgets
+
+# Graphics and computation
+sail add opengl   # OpenGL support
+sail add threads  # Threading support
+
+# Networking and compression
+sail add curl     # HTTP client library
+sail add zlib     # Compression library
+```
+
+All system libraries are automatically configured with proper `find_package()` calls and linking.
 
 ## Comparison with Cargo
 
