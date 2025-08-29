@@ -29,6 +29,26 @@ add_test(NAME cli.has_help COMMAND sail --help)
 add_test(NAME cli.version_matches COMMAND sail --version)
 set_tests_properties(cli.version_matches PROPERTIES PASS_REGULAR_EXPRESSION "${PROJECT_VERSION}")
 
+# Add comprehensive Sail functionality tests
+add_executable(test_sail test_sail.cpp)
+target_compile_features(test_sail PRIVATE cxx_std_20)
+
+# On Windows and some Linux systems, we might need to link filesystem library
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9.0")
+    target_link_libraries(test_sail PRIVATE stdc++fs)
+endif()
+
+# Add comprehensive test that exercises all Sail commands
+add_test(
+    NAME sail.comprehensive_test
+    COMMAND test_sail $<TARGET_FILE:sail>
+)
+
+# Set working directory for the test
+set_tests_properties(sail.comprehensive_test PROPERTIES 
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
 add_executable(tests tests.cpp)
 target_link_libraries(
   tests
