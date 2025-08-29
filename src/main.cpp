@@ -1,19 +1,12 @@
-#include <array>
-#include <atomic>
-#include <chrono>
 #include <cstddef>
-#include <cstdint>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 #include <sstream>
 #include <map>
 #include <fmt/base.h>
 #include <fmt/format.h>
-#include <functional>
-#include <optional>
 
 #include <CLI/CLI.hpp>
 #include <spdlog/spdlog.h>
@@ -23,9 +16,6 @@
 // the source template at `configured_files/config.hpp.in`.
 #include <internal_use_only/config.hpp>
 #include <string>
-#include <thread>
-#include <utility>
-#include <vector>
 
 namespace fs = std::filesystem;
 
