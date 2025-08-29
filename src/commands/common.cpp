@@ -1,4 +1,8 @@
 #include "common.hpp"
+#include <cstddef>
+#include <fstream>
+#include <sstream>
+#include <string>
 
 namespace sail::commands {
 
