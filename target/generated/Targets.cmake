@@ -10,11 +10,7 @@ target_link_system_libraries(
   PRIVATE
           CLI11::CLI11
           fmt::fmt
-          spdlog::spdlog
-          lefticus::tools
-          ftxui::screen
-          ftxui::dom
-          ftxui::component)
+          spdlog::spdlog)
 
 target_include_directories(${PROJECT_NAME_FROM_TOML} PRIVATE "${CMAKE_BINARY_DIR}/configured_files/include")
 
