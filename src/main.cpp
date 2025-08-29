@@ -1,10 +1,10 @@
-#include <cstddef>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <map>
+#include <string>
 #include <fmt/base.h>
 #include <fmt/format.h>
 
@@ -15,7 +15,6 @@
 // configuration step. It creates a namespace called `Sail`. You can modify
 // the source template at `configured_files/config.hpp.in`.
 #include <internal_use_only/config.hpp>
-#include <string>
 
 namespace fs = std::filesystem;
 
@@ -23,7 +22,7 @@ class SailTool {
 private:
     std::string project_root;
     
-    std::map<std::string, std::string> parse_dependencies_from_toml(const std::string& toml_content) {
+    static std::map<std::string, std::string> parse_dependencies_from_toml(const std::string& toml_content) {
         std::map<std::string, std::string> dependencies;
         std::istringstream stream(toml_content);
         std::string line;
@@ -44,7 +43,7 @@ private:
             }
             
             if (in_dependencies_section && !line.empty() && line.find('=') != std::string::npos) {
-                size_t eq_pos = line.find('=');
+                const size_t eq_pos = line.find('=');
                 std::string key = line.substr(0, eq_pos);
                 std::string value = line.substr(eq_pos + 1);
                 
@@ -60,7 +59,7 @@ private:
         return dependencies;
     }
     
-    std::string generate_dependency_cpm_calls(const std::map<std::string, std::string>& dependencies) {
+    static std::string generate_dependency_cpm_calls(const std::map<std::string, std::string>& dependencies) {
         std::string cpm_calls;
         for (const auto& [name, version] : dependencies) {
             if (name == "fmt") {
@@ -86,7 +85,7 @@ private:
         return cpm_calls;
     }
     
-    std::string generate_system_dependencies(const std::map<std::string, std::string>& dependencies) {
+    static std::string generate_system_dependencies(const std::map<std::string, std::string>& dependencies) {
         std::string system_deps;
         
         for (const auto& [name, version] : dependencies) {
@@ -136,7 +135,7 @@ qt_standard_project_setup()
     }
     
     void ensure_target_cmake_dir() {
-        fs::path target_dir = fs::path(project_root) / "target" / "cmake";
+        const fs::path target_dir = fs::path(project_root) / "target" / "cmake";
         if (!fs::exists(target_dir)) {
             fs::create_directories(target_dir);
         }
@@ -144,7 +143,7 @@ qt_standard_project_setup()
     
     void generate_cmakelists() {
         ensure_target_cmake_dir();
-        fs::path cmake_file = fs::path(project_root) / "target" / "cmake" / "CMakeLists.txt";
+        const fs::path cmake_file = fs::path(project_root) / "target" / "cmake" / "CMakeLists.txt";
         
         // Read existing Sail.toml to get dependencies
         std::string toml_content;
@@ -158,8 +157,8 @@ qt_standard_project_setup()
         }
         
         auto dependencies = parse_dependencies_from_toml(toml_content);
-        std::string system_deps = generate_system_dependencies(dependencies);
-        std::string cpm_calls = generate_dependency_cpm_calls(dependencies);
+        const std::string system_deps = generate_system_dependencies(dependencies);
+        const std::string cpm_calls = generate_dependency_cpm_calls(dependencies);
         
         std::ofstream file(cmake_file);
         file << R"(cmake_minimum_required(VERSION 3.15)
@@ -235,7 +234,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/../../sr
     }
     
     void generate_cpm_cmake() {
-        fs::path cpm_file = fs::path(project_root) / "target" / "cmake" / "cmake" / "CPM.cmake";
+        const fs::path cpm_file = fs::path(project_root) / "target" / "cmake" / "cmake" / "CPM.cmake";
         fs::create_directories(cpm_file.parent_path());
         
         std::ofstream file(cpm_file);
@@ -265,8 +264,8 @@ include(${CPM_DOWNLOAD_LOCATION})
     }
     
 public:
-    int cmd_new(const std::string& name, const std::string& path = ".") {
-        fs::path project_path = fs::path(path) / name;
+    static int cmd_new(const std::string& name, const std::string& path = ".") {
+        const fs::path project_path = fs::path(path) / name;
         
         if (fs::exists(project_path)) {
             spdlog::error("Directory {} already exists", project_path.string());
@@ -291,7 +290,7 @@ edition = "2021"
         main_file << R"(#include <iostream>
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
+    std::cout << "Hello, World!" << "\n";
     return 0;
 }
 )";
@@ -301,7 +300,7 @@ int main() {
         return 0;
     }
     
-    int cmd_init() {
+    static int cmd_init() {
         if (fs::exists("Sail.toml")) {
             spdlog::error("Sail.toml already exists in current directory");
             return 1;
@@ -325,7 +324,7 @@ authors = ["Your Name <your.email@example.com>"]
             main_file << R"(#include <iostream>
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
+    std::cout << "Hello, World!" << "\n";
     return 0;
 }
 )";
@@ -345,7 +344,7 @@ int main() {
         generate_cmakelists();
         generate_cpm_cmake();
         
-        fs::path build_dir = fs::path(project_root) / "target" / "cmake" / "build";
+        const fs::path build_dir = fs::path(project_root) / "target" / "cmake" / "build";
         fs::create_directories(build_dir);
         
         std::string cmake_cmd;
@@ -354,7 +353,7 @@ int main() {
         #else
             cmake_cmd = fmt::format("cd {} && cmake .. && make", build_dir.string());
         #endif
-        int result = std::system(cmake_cmd.c_str());
+        const int result = std::system(cmake_cmd.c_str()); // NOLINT(cert-env33-c,concurrency-mt-unsafe)
         
         if (result == 0) {
             spdlog::info("Build completed successfully");
@@ -385,8 +384,8 @@ int main() {
             return 1;
         }
         
-        std::string run_cmd = executable.string();
-        return std::system(run_cmd.c_str());
+        const std::string run_cmd = executable.string();
+        return std::system(run_cmd.c_str()); // NOLINT(cert-env33-c,concurrency-mt-unsafe)
     }
     
     int cmd_clean() {
@@ -395,7 +394,7 @@ int main() {
             return 1;
         }
         
-        fs::path target_dir = fs::path(project_root) / "target";
+        const fs::path target_dir = fs::path(project_root) / "target";
         if (fs::exists(target_dir)) {
             fs::remove_all(target_dir);
             spdlog::info("Cleaned target directory");
@@ -415,11 +414,11 @@ int main() {
         cmd_build();
         
         spdlog::info("Running tests...");
-        std::string test_cmd = fmt::format("cd {}/target/cmake/build && ctest", project_root);
-        return std::system(test_cmd.c_str());
+        const std::string test_cmd = fmt::format("cd {}/target/cmake/build && ctest", project_root);
+        return std::system(test_cmd.c_str()); // NOLINT(cert-env33-c,concurrency-mt-unsafe)
     }
     
-    int cmd_add(const std::string& dependency_spec) {
+    int cmd_add(const std::string& dependency_spec) { // NOLINT(readability-function-cognitive-complexity)
         if (!find_project_root()) {
             spdlog::error("Could not find Sail.toml in current directory or any parent directory");
             return 1;
@@ -429,7 +428,7 @@ int main() {
         std::string dep_name;
         std::string dep_version;
         
-        size_t at_pos = dependency_spec.find('@');
+        const size_t at_pos = dependency_spec.find('@');
         if (at_pos != std::string::npos) {
             dep_name = dependency_spec.substr(0, at_pos);
             dep_version = dependency_spec.substr(at_pos + 1);
@@ -450,13 +449,7 @@ int main() {
                 dep_version = "5.15";
             } else if (dep_name == "qt6") {
                 dep_version = "6.5";
-            } else if (dep_name == "opengl") {
-                dep_version = "system";
-            } else if (dep_name == "threads") {
-                dep_version = "system";
-            } else if (dep_name == "zlib") {
-                dep_version = "system";
-            } else if (dep_name == "curl") {
+            } else if (dep_name == "opengl" || dep_name == "threads" || dep_name == "zlib" || dep_name == "curl") {
                 dep_version = "system";
             } else {
                 spdlog::error("No default version available for '{}'. Please specify version with {}@<version>", dep_name, dep_name);
@@ -465,7 +458,7 @@ int main() {
         }
         
         // Read current Sail.toml
-        fs::path toml_path = fs::path(project_root) / "Sail.toml";
+        const fs::path toml_path = fs::path(project_root) / "Sail.toml";
         std::string toml_content;
         std::ifstream toml_file(toml_path);
         if (toml_file.is_open()) {
@@ -514,7 +507,7 @@ int main() {
             }
             
             if (in_dependencies_section && !line.empty() && line.find('=') != std::string::npos) {
-                size_t eq_pos = line.find('=');
+                const size_t eq_pos = line.find('=');
                 std::string key = line.substr(0, eq_pos);
                 key.erase(0, key.find_first_not_of(" \t"));
                 key.erase(key.find_last_not_of(" \t") + 1);
@@ -586,11 +579,11 @@ int main(int argc, const char **argv)
     }
     
     if (*new_cmd) {
-        return sail.cmd_new(new_name, new_path);
+        return SailTool::cmd_new(new_name, new_path);
     }
     
     if (*init_cmd) {
-        return sail.cmd_init();
+        return SailTool::cmd_init();
     }
     
     if (*build_cmd) {

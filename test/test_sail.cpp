@@ -1,7 +1,6 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <sstream>
 #include <string>
 #include <vector>
 #include <cstdlib>
@@ -17,41 +16,41 @@ private:
     int tests_failed = 0;
 
     // ANSI color codes (work on most terminals)
-    const std::string RED = "\033[0;31m";
-    const std::string GREEN = "\033[0;32m";
-    const std::string BLUE = "\033[0;34m";
-    const std::string YELLOW = "\033[1;33m";
-    const std::string NC = "\033[0m"; // No Color
+    static inline const std::string RED = "\033[0;31m";
+    static inline const std::string GREEN = "\033[0;32m";
+    static inline const std::string BLUE = "\033[0;34m";
+    static inline const std::string YELLOW = "\033[1;33m";
+    static inline const std::string NC = "\033[0m"; // No Color
 
     void print_header(const std::string& title) {
-        std::cout << "\n" << BLUE << "=== " << title << " ===" << NC << std::endl;
+        std::cout << "\n" << BLUE << "=== " << title << " ===" << NC << "\n";
     }
 
     void print_test(const std::string& test) {
-        std::cout << YELLOW << "Testing: " << test << NC << std::endl;
+        std::cout << YELLOW << "Testing: " << test << NC << "\n";
     }
 
     void print_success(const std::string& message) {
-        std::cout << GREEN << "✓ " << message << NC << std::endl;
+        std::cout << GREEN << "✓ " << message << NC << "\n";
         tests_passed++;
     }
 
     void print_error(const std::string& message) {
-        std::cout << RED << "✗ " << message << NC << std::endl;
+        std::cout << RED << "✗ " << message << NC << "\n";
         tests_failed++;
     }
 
     // Execute a command and return output + exit code
     struct CommandResult {
         std::string output;
-        int exit_code;
+        int exit_code{};
     };
 
     CommandResult execute_command(const std::string& command) {
         CommandResult result;
         
         // Create a temporary file for output
-        fs::path temp_file = test_dir / "temp_output.txt";
+        const fs::path temp_file = test_dir / "temp_output.txt";
         
         std::string full_command = command;
 #ifdef _WIN32
@@ -60,7 +59,7 @@ private:
         full_command += " > '" + temp_file.string() + "' 2>&1";
 #endif
         
-        result.exit_code = std::system(full_command.c_str());
+        result.exit_code = std::system(full_command.c_str()); // NOLINT(cert-env33-c,concurrency-mt-unsafe)
         
         // Read the output
         std::ifstream file(temp_file);
@@ -78,7 +77,7 @@ private:
         return result;
     }
 
-    std::string read_file(const fs::path& file_path) {
+    static std::string read_file(const fs::path& file_path) {
         std::ifstream file(file_path);
         if (!file.is_open()) {
             return "";
@@ -93,12 +92,12 @@ private:
         return content;
     }
 
-    bool contains(const std::string& str, const std::string& substr) {
+    static bool contains(const std::string& str, const std::string& substr) {
         return str.find(substr) != std::string::npos;
     }
 
 public:
-    SailTester(const std::string& sail_exec) : sail_executable(sail_exec) {
+    explicit SailTester(std::string sail_exec) : sail_executable(std::move(sail_exec)) {
         original_dir = fs::current_path();
         test_dir = fs::temp_directory_path() / "sail-tests";
     }
@@ -166,7 +165,7 @@ public:
             print_success("New project created successfully");
             
             // Check Sail.toml content
-            std::string toml_content = read_file("test-project/Sail.toml");
+            const std::string toml_content = read_file("test-project/Sail.toml");
             if (contains(toml_content, "name = \"test-project\"")) {
                 print_success("Sail.toml has correct project name");
             } else {
@@ -174,7 +173,7 @@ public:
             }
             
             // Check main.cpp content
-            std::string main_content = read_file("test-project/src/main.cpp");
+            const std::string main_content = read_file("test-project/src/main.cpp");
             if (contains(main_content, "Hello, World!")) {
                 print_success("main.cpp has correct template content");
             } else {
@@ -223,7 +222,7 @@ public:
             print_success("Init created project files successfully");
             
             // Check that project name matches directory name
-            std::string toml_content = read_file("Sail.toml");
+            const std::string toml_content = read_file("Sail.toml");
             if (contains(toml_content, "name = \"init-test\"")) {
                 print_success("Sail.toml has correct project name (directory name)");
             } else {
@@ -257,7 +256,7 @@ public:
         print_test("sail add fmt");
         auto result = execute_command(sail_executable + " add fmt");
         if (result.exit_code == 0) {
-            std::string toml_content = read_file("Sail.toml");
+            const std::string toml_content = read_file("Sail.toml");
             if (contains(toml_content, "fmt = \"10.1.1\"")) {
                 print_success("Added fmt with default version");
             } else {
@@ -271,7 +270,7 @@ public:
         print_test("sail add spdlog@1.13.0");
         result = execute_command(sail_executable + " add spdlog@1.13.0");
         if (result.exit_code == 0) {
-            std::string toml_content = read_file("Sail.toml");
+            const std::string toml_content = read_file("Sail.toml");
             if (contains(toml_content, "spdlog = \"1.13.0\"")) {
                 print_success("Added spdlog with specific version");
             } else {
@@ -285,7 +284,7 @@ public:
         print_test("sail add fmt@9.1.0 (update existing)");
         result = execute_command(sail_executable + " add fmt@9.1.0");
         if (result.exit_code == 0) {
-            std::string toml_content = read_file("Sail.toml");
+            const std::string toml_content = read_file("Sail.toml");
             if (contains(toml_content, "fmt = \"9.1.0\"")) {
                 print_success("Updated fmt version successfully");
             } else {
@@ -337,7 +336,7 @@ public:
             print_success("Build completed and created artifacts");
             
             // Check that CMakeLists.txt contains dependency
-            std::string cmake_content = read_file("target/cmake/CMakeLists.txt");
+            const std::string cmake_content = read_file("target/cmake/CMakeLists.txt");
             if (contains(cmake_content, "CPMAddPackage") && contains(cmake_content, "fmt")) {
                 print_success("CMakeLists.txt contains dependency information");
             } else {
@@ -498,12 +497,12 @@ public:
 
     void run_all_tests() {
         print_header("Sail Comprehensive Test Suite");
-        std::cout << "Testing Sail executable at: " << sail_executable << std::endl;
+        std::cout << "Testing Sail executable at: " << sail_executable << "\n";
         
         // Verify sail executable exists
         if (!fs::exists(sail_executable)) {
-            std::cout << RED << "ERROR: Sail executable not found at " << sail_executable << NC << std::endl;
-            std::cout << "Please build Sail first or provide correct path as argument" << std::endl;
+            std::cout << RED << "ERROR: Sail executable not found at " << sail_executable << NC << "\n";
+            std::cout << "Please build Sail first or provide correct path as argument" << "\n";
             return;
         }
         
@@ -523,13 +522,13 @@ public:
         
         // Summary
         print_header("Test Results Summary");
-        std::cout << "Tests passed: " << GREEN << tests_passed << NC << std::endl;
-        std::cout << "Tests failed: " << RED << tests_failed << NC << std::endl;
+        std::cout << "Tests passed: " << GREEN << tests_passed << NC << "\n";
+        std::cout << "Tests failed: " << RED << tests_failed << NC << "\n";
         
         if (tests_failed == 0) {
-            std::cout << "\n" << GREEN << "🎉 All tests passed!" << NC << std::endl;
+            std::cout << "\n" << GREEN << "🎉 All tests passed!" << NC << "\n";
         } else {
-            std::cout << "\n" << RED << "❌ Some tests failed." << NC << std::endl;
+            std::cout << "\n" << RED << "❌ Some tests failed." << NC << "\n";
         }
     }
 };
@@ -538,10 +537,10 @@ int main(int argc, char* argv[]) {
     std::string sail_executable;
     
     if (argc > 1) {
-        sail_executable = argv[1];
+        sail_executable = std::string(argv[1]); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     } else {
         // Try to find the executable in common locations
-        std::vector<std::string> possible_paths = {
+        const std::vector<std::string> possible_paths = {
             "./target/generated/build/sail",
             "../target/generated/build/sail",
             "./build/sail",
@@ -557,10 +556,10 @@ int main(int argc, char* argv[]) {
         }
         
         if (sail_executable.empty()) {
-            std::cout << "Usage: " << argv[0] << " <path-to-sail-executable>" << std::endl;
-            std::cout << "Or ensure sail executable is in one of these locations:" << std::endl;
+            std::cout << "Usage: " << std::string(argv[0]) << " <path-to-sail-executable>" << "\n"; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            std::cout << "Or ensure sail executable is in one of these locations:" << "\n";
             for (const auto& path : possible_paths) {
-                std::cout << "  " << path << std::endl;
+                std::cout << "  " << path << "\n";
             }
             return 1;
         }
