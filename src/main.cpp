@@ -34,7 +34,7 @@ struct CommandExecutor {
 };
 
 int execute_commands(const std::vector<CommandExecutor>& commands) {
-    auto found_command = std::find_if(commands.begin(), commands.end(),
+    auto found_command = std::find_if(commands.begin(), commands.end(), // NOLINT(boost-use-ranges,modernize-use-ranges)
         [](const CommandExecutor& cmd) { return cmd.should_execute; });
     
     if (found_command != commands.end()) {
