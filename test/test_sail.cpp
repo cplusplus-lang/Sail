@@ -5,6 +5,7 @@
 #include <vector>
 #include <cstdlib>
 #include <utility>
+#include <algorithm>
 
 namespace fs = std::filesystem;
 
@@ -101,9 +102,7 @@ private:
     }
 
 public:
-    explicit SailTester(std::string sail_exec) : sail_executable(std::move(sail_exec)) {
-        original_dir = fs::current_path();
-        test_dir = fs::temp_directory_path() / "sail-tests";
+    explicit SailTester(std::string sail_exec) : sail_executable(std::move(sail_exec)), original_dir(fs::current_path()), test_dir(fs::temp_directory_path() / "sail-tests") {
     }
 
     void setup_tests() {
@@ -553,11 +552,11 @@ int main(int argc, char* argv[]) noexcept {
                 "sail"
             };
             
-            for (const auto& path : possible_paths) {
-                if (fs::exists(path)) {
-                    sail_executable = path;
-                    break;
-                }
+            auto found_path = std::find_if(possible_paths.begin(), possible_paths.end(),
+                [](const std::string& path) { return fs::exists(path); });
+            
+            if (found_path != possible_paths.end()) {
+                sail_executable = *found_path;
             }
             
             if (sail_executable.empty()) {
