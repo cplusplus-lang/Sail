@@ -552,7 +552,7 @@ int main(int argc, char* argv[]) {
                 "sail"
             };
             
-            auto found_path = std::find_if(possible_paths.begin(), possible_paths.end(), // NOLINT(boost-use-ranges)
+            auto found_path = std::find_if(possible_paths.begin(), possible_paths.end(), // NOLINT(boost-use-ranges,modernize-use-ranges)
                 [](const std::string& path) { return fs::exists(path); });
             
             if (found_path != possible_paths.end()) {

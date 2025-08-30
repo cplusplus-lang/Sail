@@ -12,47 +12,49 @@ namespace fs = std::filesystem;
 
 namespace sail::commands {
 
-int cmd_add(const std::string& dependency_spec) { // NOLINT(readability-function-cognitive-complexity)
-    if (!Utils::find_project_root()) {
-        spdlog::error("Could not find Sail.toml in current directory or any parent directory");
-        return 1;
+struct DependencySpec {
+    std::string name;
+    std::string version;
+};
+
+std::string get_default_version(const std::string& dep_name) {
+    if (dep_name == "fmt") {
+        return "10.1.1";
+    } else if (dep_name == "spdlog") {
+        return "1.12.0";
+    } else if (dep_name == "catch2") {
+        return "3.4.0";
+    } else if (dep_name == "cli11") {
+        return "2.3.2";
+    } else if (dep_name == "nlohmann_json") {
+        return "3.11.2";
+    } else if (dep_name == "qt5") {
+        return "5.15";
+    } else if (dep_name == "qt6") {
+        return "6.5";
+    } else if (dep_name == "opengl" || dep_name == "threads" || dep_name == "zlib" || dep_name == "curl") {
+        return "system";
+    } else {
+        return "";  // Empty string indicates no default version
     }
-    
-    // Parse dependency specification (name@version or just name)
-    std::string dep_name;
-    std::string dep_version;
+}
+
+DependencySpec parse_dependency_spec(const std::string& dependency_spec) {
+    DependencySpec spec;
     
     const size_t at_pos = dependency_spec.find('@');
     if (at_pos != std::string::npos) {
-        dep_name = dependency_spec.substr(0, at_pos);
-        dep_version = dependency_spec.substr(at_pos + 1);
+        spec.name = dependency_spec.substr(0, at_pos);
+        spec.version = dependency_spec.substr(at_pos + 1);
     } else {
-        dep_name = dependency_spec;
-        // Default versions for common packages
-        if (dep_name == "fmt") {
-            dep_version = "10.1.1";
-        } else if (dep_name == "spdlog") {
-            dep_version = "1.12.0";
-        } else if (dep_name == "catch2") {
-            dep_version = "3.4.0";
-        } else if (dep_name == "cli11") {
-            dep_version = "2.3.2";
-        } else if (dep_name == "nlohmann_json") {
-            dep_version = "3.11.2";
-        } else if (dep_name == "qt5") {
-            dep_version = "5.15";
-        } else if (dep_name == "qt6") {
-            dep_version = "6.5";
-        } else if (dep_name == "opengl" || dep_name == "threads" || dep_name == "zlib" || dep_name == "curl") {
-            dep_version = "system";
-        } else {
-            spdlog::error("No default version available for '{}'. Please specify version with {}@<version>", dep_name, dep_name);
-            return 1;
-        }
+        spec.name = dependency_spec;
+        spec.version = get_default_version(spec.name);
     }
     
-    // Read current Sail.toml
-    const fs::path toml_path = fs::path(Utils::project_root) / "Sail.toml";
+    return spec;
+}
+
+std::string read_toml_file(const fs::path& toml_path) {
     std::string toml_content;
     std::ifstream toml_file(toml_path);
     if (toml_file.is_open()) {
@@ -61,20 +63,11 @@ int cmd_add(const std::string& dependency_spec) { // NOLINT(readability-function
             toml_content += line + "\n";
         }
         toml_file.close();
-    } else {
-        spdlog::error("Could not read Sail.toml");
-        return 1;
     }
-    
-    // Check if dependency already exists
-    auto existing_deps = Utils::parse_dependencies_from_toml(toml_content);
-    if (existing_deps.find(dep_name) != existing_deps.end()) {
-        spdlog::info("Updating {} from {} to {}", dep_name, existing_deps[dep_name], dep_version);
-    } else {
-        spdlog::info("Adding {} version {}", dep_name, dep_version);
-    }
-    
-    // Add or update the dependency
+    return toml_content;
+}
+
+std::string update_toml_with_dependency(const std::string& toml_content, const std::string& dep_name, const std::string& dep_version) {
     std::string new_toml_content;
     std::istringstream stream(toml_content);
     std::string line;
@@ -123,6 +116,43 @@ int cmd_add(const std::string& dependency_spec) { // NOLINT(readability-function
         }
         new_toml_content += fmt::format("{} = \"{}\"\n", dep_name, dep_version);
     }
+    
+    return new_toml_content;
+}
+
+int cmd_add(const std::string& dependency_spec) {
+    if (!Utils::find_project_root()) {
+        spdlog::error("Could not find Sail.toml in current directory or any parent directory");
+        return 1;
+    }
+    
+    // Parse dependency specification
+    DependencySpec spec = parse_dependency_spec(dependency_spec);
+    
+    if (spec.version.empty()) {
+        spdlog::error("No default version available for '{}'. Please specify version with {}@<version>", spec.name, spec.name);
+        return 1;
+    }
+    
+    // Read current Sail.toml
+    const fs::path toml_path = fs::path(Utils::project_root) / "Sail.toml";
+    std::string toml_content = read_toml_file(toml_path);
+    
+    if (toml_content.empty()) {
+        spdlog::error("Could not read Sail.toml");
+        return 1;
+    }
+    
+    // Check if dependency already exists
+    auto existing_deps = Utils::parse_dependencies_from_toml(toml_content);
+    if (existing_deps.find(spec.name) != existing_deps.end()) {
+        spdlog::info("Updating {} from {} to {}", spec.name, existing_deps[spec.name], spec.version);
+    } else {
+        spdlog::info("Adding {} version {}", spec.name, spec.version);
+    }
+    
+    // Update TOML content
+    std::string new_toml_content = update_toml_with_dependency(toml_content, spec.name, spec.version);
     
     // Write the updated TOML back
     std::ofstream output_file(toml_path);
