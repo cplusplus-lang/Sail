@@ -1,6 +1,8 @@
 #include <cstdlib>
 #include <exception>
 #include <string>
+#include <vector>
+#include <functional>
 #include <fmt/base.h>
 #include <fmt/format.h>
 
@@ -20,6 +22,23 @@
 #include "commands/cmd_clean.hpp"
 #include "commands/cmd_test.hpp"
 #include "commands/cmd_add.hpp"
+
+struct CommandExecutor {
+    std::function<int()> execute;
+    bool should_execute;
+    
+    CommandExecutor() : should_execute(false) {}
+    CommandExecutor(std::function<int()> func) : execute(func), should_execute(true) {}
+};
+
+int execute_commands(const std::vector<CommandExecutor>& commands) {
+    for (const auto& cmd : commands) {
+        if (cmd.should_execute) {
+            return cmd.execute();
+        }
+    }
+    return 0;
+}
 
 // NOLINTNEXTLINE(bugprone-exception-escape)
 int main(int argc, const char **argv)
@@ -57,33 +76,18 @@ int main(int argc, const char **argv)
       return EXIT_SUCCESS;
     }
     
-    if (*new_cmd) {
-        return sail::commands::cmd_new(new_name, new_path);
-    }
+    // Command dispatch table
+    std::vector<CommandExecutor> commands = {
+        *new_cmd ? CommandExecutor([&]() { return sail::commands::cmd_new(new_name, new_path); }) : CommandExecutor(),
+        *init_cmd ? CommandExecutor([]() { return sail::commands::cmd_init(); }) : CommandExecutor(),
+        *build_cmd ? CommandExecutor([]() { return sail::commands::cmd_build(); }) : CommandExecutor(),
+        *run_cmd ? CommandExecutor([]() { return sail::commands::cmd_run(); }) : CommandExecutor(),
+        *clean_cmd ? CommandExecutor([]() { return sail::commands::cmd_clean(); }) : CommandExecutor(),
+        *test_cmd ? CommandExecutor([]() { return sail::commands::cmd_test(); }) : CommandExecutor(),
+        *add_cmd ? CommandExecutor([&]() { return sail::commands::cmd_add(dependency_spec); }) : CommandExecutor()
+    };
     
-    if (*init_cmd) {
-        return sail::commands::cmd_init();
-    }
-    
-    if (*build_cmd) {
-        return sail::commands::cmd_build();
-    }
-    
-    if (*run_cmd) {
-        return sail::commands::cmd_run();
-    }
-    
-    if (*clean_cmd) {
-        return sail::commands::cmd_clean();
-    }
-    
-    if (*test_cmd) {
-        return sail::commands::cmd_test();
-    }
-    
-    if (*add_cmd) {
-        return sail::commands::cmd_add(dependency_spec);
-    }
+    return execute_commands(commands);
 
   } catch (const std::exception &e) {
     spdlog::error("Unhandled exception in main: {}", e.what());
