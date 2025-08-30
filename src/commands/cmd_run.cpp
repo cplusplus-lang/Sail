@@ -2,6 +2,9 @@
 #include "cmd_build.hpp"
 #include "common.hpp"
 #include <filesystem>
+#include <string>
+#include <cstdlib>
+#include <spdlog/spdlog.h>
 
 namespace fs = std::filesystem;
 
