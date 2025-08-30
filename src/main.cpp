@@ -28,7 +28,7 @@ struct CommandExecutor {
     bool should_execute;
     
     CommandExecutor() : should_execute(false) {}
-    CommandExecutor(std::function<int()> func) : execute(func), should_execute(true) {}
+    explicit CommandExecutor(std::function<int()> func) : execute(std::move(func)), should_execute(true) {}
 };
 
 int execute_commands(const std::vector<CommandExecutor>& commands) {
@@ -77,7 +77,7 @@ int main(int argc, const char **argv)
     }
     
     // Command dispatch table
-    std::vector<CommandExecutor> commands = {
+    const std::vector<CommandExecutor> commands = {
         *new_cmd ? CommandExecutor([&]() { return sail::commands::cmd_new(new_name, new_path); }) : CommandExecutor(),
         *init_cmd ? CommandExecutor([]() { return sail::commands::cmd_init(); }) : CommandExecutor(),
         *build_cmd ? CommandExecutor([]() { return sail::commands::cmd_build(); }) : CommandExecutor(),
