@@ -93,6 +93,4 @@ int main(int argc, const char **argv)
     spdlog::error("Unhandled exception in main: {}", e.what());
     return 1;
   }
-  
-  return 0;
 }
