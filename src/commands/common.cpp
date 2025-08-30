@@ -3,6 +3,10 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <filesystem>
+#include <map>
+#include <spdlog/spdlog.h>
+#include <fmt/format.h>
 
 namespace sail::commands {
 

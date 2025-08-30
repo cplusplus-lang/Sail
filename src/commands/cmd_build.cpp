@@ -1,5 +1,10 @@
 #include "cmd_build.hpp"
 #include "common.hpp"
+#include <filesystem>
+#include <string>
+#include <cstdlib>
+#include <spdlog/spdlog.h>
+#include <fmt/format.h>
 
 namespace sail::commands {
 
