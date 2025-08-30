@@ -1,6 +1,14 @@
 #include "cmd_add.hpp"
 #include "common.hpp"
 #include <sstream>
+#include <string>
+#include <filesystem>
+#include <fstream>
+#include <cstddef>
+#include <spdlog/spdlog.h>
+#include <fmt/format.h>
+
+namespace fs = std::filesystem;
 
 namespace sail::commands {
 

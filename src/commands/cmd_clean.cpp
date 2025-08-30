@@ -1,6 +1,7 @@
 #include "cmd_clean.hpp"
 #include "common.hpp"
 #include <filesystem>
+#include <spdlog/spdlog.h>
 
 namespace fs = std::filesystem;
 
