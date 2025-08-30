@@ -4,6 +4,7 @@
 #include <vector>
 #include <functional>
 #include <utility>
+#include <algorithm>
 #include <fmt/base.h>
 #include <fmt/format.h>
 
@@ -33,10 +34,11 @@ struct CommandExecutor {
 };
 
 int execute_commands(const std::vector<CommandExecutor>& commands) {
-    for (const auto& cmd : commands) {
-        if (cmd.should_execute) {
-            return cmd.execute();
-        }
+    auto found_command = std::find_if(commands.begin(), commands.end(),
+        [](const CommandExecutor& cmd) { return cmd.should_execute; });
+    
+    if (found_command != commands.end()) {
+        return found_command->execute();
     }
     return 0;
 }
