@@ -133,11 +133,7 @@ void Utils::ensure_target_cmake_dir() {
     }
 }
 
-void Utils::generate_cmakelists() {
-    ensure_target_cmake_dir();
-    const fs::path cmake_file = fs::path(project_root) / "target" / "cmake" / "CMakeLists.txt";
-    
-    // Read existing Sail.toml to get dependencies
+std::string Utils::read_toml_content() {
     std::string toml_content;
     std::ifstream toml_file(fs::path(project_root) / "Sail.toml");
     if (toml_file.is_open()) {
@@ -147,10 +143,56 @@ void Utils::generate_cmakelists() {
         }
         toml_file.close();
     }
+    return toml_content;
+}
+
+std::string Utils::generate_target_link_libraries(const std::map<std::string, std::string>& dependencies) {
+    std::string link_commands;
     
+    for (const auto& [name, version] : dependencies) {
+        if (name == "fmt") {
+            link_commands += "target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt)\n";
+        } else if (name == "spdlog") {
+            link_commands += "target_link_libraries(${PROJECT_NAME} PRIVATE spdlog::spdlog)\n";
+        } else if (name == "catch2") {
+            link_commands += "target_link_libraries(${PROJECT_NAME} PRIVATE Catch2::Catch2WithMain)\n";
+        } else if (name == "cli11") {
+            link_commands += "target_link_libraries(${PROJECT_NAME} PRIVATE CLI11::CLI11)\n";
+        } else if (name == "nlohmann_json") {
+            link_commands += "target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)\n";
+        } else if (name == "eigen3") {
+            link_commands += "target_link_libraries(${PROJECT_NAME} PRIVATE Eigen3::Eigen)\n";
+        } else if (name == "boost") {
+            link_commands += "target_link_libraries(${PROJECT_NAME} PRIVATE Boost::boost)\n";
+        } else if (name == "opencv") {
+            link_commands += "target_link_libraries(${PROJECT_NAME} PRIVATE opencv_core opencv_imgproc opencv_imgcodecs)\n";
+        } else if (name == "qt5") {
+            link_commands += "target_link_libraries(${PROJECT_NAME} PRIVATE Qt5::Core Qt5::Widgets)\n";
+        } else if (name == "qt6") {
+            link_commands += "target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Core Qt6::Widgets)\n";
+        } else if (name == "opengl") {
+            link_commands += "target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL)\n";
+        } else if (name == "threads") {
+            link_commands += "target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)\n";
+        } else if (name == "zlib") {
+            link_commands += "target_link_libraries(${PROJECT_NAME} PRIVATE ZLIB::ZLIB)\n";
+        } else if (name == "curl") {
+            link_commands += "target_link_libraries(${PROJECT_NAME} PRIVATE CURL::libcurl)\n";
+        }
+    }
+    
+    return link_commands;
+}
+
+void Utils::generate_cmakelists() {
+    ensure_target_cmake_dir();
+    const fs::path cmake_file = fs::path(project_root) / "target" / "cmake" / "CMakeLists.txt";
+    
+    const std::string toml_content = read_toml_content();
     auto dependencies = parse_dependencies_from_toml(toml_content);
     const std::string system_deps = generate_system_dependencies(dependencies);
     const std::string cpm_calls = generate_dependency_cpm_calls(dependencies);
+    const std::string link_commands = generate_target_link_libraries(dependencies);
     
     std::ofstream file(cmake_file);
     file << R"(cmake_minimum_required(VERSION 3.15)
@@ -187,39 +229,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/../../sr
 
 # Link dependencies
 )";
-    
-    // Add target_link_libraries for known dependencies
-    for (const auto& [name, version] : dependencies) {
-        if (name == "fmt") {
-            file << "target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt)\n";
-        } else if (name == "spdlog") {
-            file << "target_link_libraries(${PROJECT_NAME} PRIVATE spdlog::spdlog)\n";
-        } else if (name == "catch2") {
-            file << "target_link_libraries(${PROJECT_NAME} PRIVATE Catch2::Catch2WithMain)\n";
-        } else if (name == "cli11") {
-            file << "target_link_libraries(${PROJECT_NAME} PRIVATE CLI11::CLI11)\n";
-        } else if (name == "nlohmann_json") {
-            file << "target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)\n";
-        } else if (name == "eigen3") {
-            file << "target_link_libraries(${PROJECT_NAME} PRIVATE Eigen3::Eigen)\n";
-        } else if (name == "boost") {
-            file << "target_link_libraries(${PROJECT_NAME} PRIVATE Boost::boost)\n";
-        } else if (name == "opencv") {
-            file << "target_link_libraries(${PROJECT_NAME} PRIVATE opencv_core opencv_imgproc opencv_imgcodecs)\n";
-        } else if (name == "qt5") {
-            file << "target_link_libraries(${PROJECT_NAME} PRIVATE Qt5::Core Qt5::Widgets)\n";
-        } else if (name == "qt6") {
-            file << "target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Core Qt6::Widgets)\n";
-        } else if (name == "opengl") {
-            file << "target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL)\n";
-        } else if (name == "threads") {
-            file << "target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)\n";
-        } else if (name == "zlib") {
-            file << "target_link_libraries(${PROJECT_NAME} PRIVATE ZLIB::ZLIB)\n";
-        } else if (name == "curl") {
-            file << "target_link_libraries(${PROJECT_NAME} PRIVATE CURL::libcurl)\n";
-        }
-    }
+    file << link_commands;
     
     file.close();
     spdlog::info("Generated CMakeLists.txt in target/cmake/");

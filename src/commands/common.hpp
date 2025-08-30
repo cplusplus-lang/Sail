@@ -24,6 +24,8 @@ public:
     static std::string generate_dependency_cpm_calls(const std::map<std::string, std::string>& dependencies);
     static std::string generate_system_dependencies(const std::map<std::string, std::string>& dependencies);
     static void ensure_target_cmake_dir();
+    static std::string read_toml_content();
+    static std::string generate_target_link_libraries(const std::map<std::string, std::string>& dependencies);
     static void generate_cmakelists();
     static void generate_cpm_cmake();
 };

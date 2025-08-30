@@ -9,6 +9,7 @@ target/release/
 
 # User spesific settings
 CMakeUserPresets.json
+projects/
 
 # IDE files
 .vs/
