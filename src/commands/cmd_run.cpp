@@ -1,6 +1,9 @@
 #include "cmd_run.hpp"
 #include "cmd_build.hpp"
 #include "common.hpp"
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 namespace sail::commands {
 

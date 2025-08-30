@@ -8,6 +8,8 @@
 #include <spdlog/spdlog.h>
 #include <fmt/format.h>
 
+namespace fs = std::filesystem;
+
 namespace sail::commands {
 
 std::string Utils::project_root;

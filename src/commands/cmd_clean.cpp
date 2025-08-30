@@ -1,5 +1,8 @@
 #include "cmd_clean.hpp"
 #include "common.hpp"
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 namespace sail::commands {
 

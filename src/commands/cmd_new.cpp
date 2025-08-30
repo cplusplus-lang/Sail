@@ -5,6 +5,8 @@
 #include <spdlog/spdlog.h>
 #include <fmt/format.h>
 
+namespace fs = std::filesystem;
+
 namespace sail::commands {
 
 int cmd_new(const std::string& name, const std::string& path) {
